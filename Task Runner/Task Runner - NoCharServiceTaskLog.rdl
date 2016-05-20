@@ -852,8 +852,8 @@
         </Paragraphs>
         <rd:DefaultName>textbox1</rd:DefaultName>
         <Top>1.08514cm</Top>
-        <Left>5.94431cm</Left>
-        <Height>0.48361in</Height>
+        <Left>5.97959cm</Left>
+        <Height>0.60861in</Height>
         <Width>6.53125in</Width>
         <ZIndex>2</ZIndex>
         <Style>
@@ -894,7 +894,7 @@
         </Style>
       </Textbox>
     </ReportItems>
-    <Height>2.30333in</Height>
+    <Height>2.17833in</Height>
     <Style />
   </Body>
   <Width>13.65625in</Width>
@@ -910,7 +910,7 @@
     <DataSource Name="MDropDave">
       <ConnectionProperties>
         <DataProvider>SQL</DataProvider>
-        <ConnectString>Data Source=MEL-DEVWS01;Initial Catalog=RosterOnDemo_8.12.1</ConnectString>
+        <ConnectString>Data Source=MEL-DEVVSQL01;Initial Catalog=mDropDave</ConnectString>
       </ConnectionProperties>
       <rd:SecurityType>DataBase</rd:SecurityType>
       <rd:DataSourceID>221d6710-5a2b-4d86-ba63-f8d7327e4a1e</rd:DataSourceID>
@@ -927,16 +927,19 @@
           <QueryParameter Name="@Status">
             <Value>=Parameters!Status.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@dateFrom">
-            <Value>=Parameters!dateFrom.Value</Value>
+          <QueryParameter Name="@from_date">
+            <Value>=Parameters!from_date.Value</Value>
           </QueryParameter>
-          <QueryParameter Name="@dateTo">
-            <Value>=Parameters!dateTo.Value</Value>
+          <QueryParameter Name="@to_date">
+            <Value>=Parameters!to_date.Value</Value>
           </QueryParameter>
         </QueryParameters>
         <CommandText>SELECT        service_task_log_id, task_status_id, task_created_date, task_started_date, task_finished_date, task_type_id, task, unique_id, from_date, to_date, ip_address
 FROM            service_task_log
-WHERE         (task_type_id = (@TaskTypeId) OR (@TaskTypeId)=0) and (task_status_id=@Status or @Status=10) and task_started_date&gt;= @dateFrom and task_started_date&lt;=@dateTo
+WHERE        (task_type_id = @TaskTypeId) AND (task_status_id = @Status) AND (task_started_date &gt;= @from_date) AND (task_started_date &lt;= @to_date + 1) OR
+                         (task_type_id = @TaskTypeId) AND (task_started_date &gt;= @from_date) AND (task_started_date &lt;= @to_date+1) AND (@Status = 10) OR
+                         (task_status_id = @Status) AND (task_started_date &gt;= @from_date) AND (task_started_date &lt;= @to_date+1) AND (@TaskTypeId = 0) OR
+                         (task_started_date &gt;= @from_date) AND (task_started_date &lt;= @to_date+1) AND (@Status = 10) AND (@TaskTypeId = 0)
 ORDER BY task_type_id, service_task_log_id</CommandText>
       </Query>
       <Fields>
@@ -989,7 +992,7 @@ ORDER BY task_type_id, service_task_log_id</CommandText>
     <DataSet Name="TaskType">
       <Query>
         <DataSourceName>MDropDave</DataSourceName>
-        <CommandText>SELECT CAST(0 AS DECIMAL) as ID,'All' as Label UNION ALL SELECT CAST(5008 AS DECIMAL) as ID,'File Import' as Label UNION ALL SELECT CAST(8000 AS DECIMAL), 'Send Work Orders to Ellipse' UNION ALL SELECT CAST(5009 AS DECIMAL), 'Notifications' UNION ALL SELECT CAST(5010 AS DECIMAL), 'Payroll Import' UNION ALL SELECT CAST(5004 AS DECIMAL), 'Log Collection' UNION ALL SELECT CAST(5002 AS DECIMAL), 'Alerts' UNION ALL SELECT CAST(5016 AS DECIMAL), 'Biometric Time Sync' UNION ALL SELECT CAST(5019 AS DECIMAL), 'Roster Change' UNION ALL SELECT CAST(5018 AS DECIMAL), 'Biometric Configuration'</CommandText>
+        <CommandText>SELECT CAST(0 AS DECIMAL) as ID,'All' as Label UNION ALL SELECT CAST(5008 AS DECIMAL) as ID,'File Import' as Label UNION ALL SELECT CAST(8000 AS DECIMAL), 'Send Work Orders to Ellipse' UNION ALL SELECT CAST(5009 AS DECIMAL), 'Notifications' UNION ALL SELECT CAST(5010 AS DECIMAL), 'Payroll Import' UNION ALL SELECT CAST(5004 AS DECIMAL), 'Log Collection' UNION ALL SELECT CAST(5002 AS DECIMAL), 'Alerts' UNION ALL SELECT CAST(5016 AS DECIMAL), 'Biometric Time Sync' UNION ALL SELECT CAST(5019 AS DECIMAL), 'Roster Change' UNION ALL SELECT CAST(5018 AS DECIMAL), 'Biometric Configuration'  UNION ALL SELECT CAST(5006 AS DECIMAL), 'Biometric Record Sync'  UNION ALL SELECT CAST(5005 AS DECIMAL), 'Biometric Rebuild'</CommandText>
       </Query>
       <Fields>
         <Field Name="ID">
@@ -1018,8 +1021,42 @@ ORDER BY task_type_id, service_task_log_id</CommandText>
         </Field>
       </Fields>
     </DataSet>
+    <DataSet Name="DefaultValues">
+      <Query>
+        <DataSourceName>MDropDave</DataSourceName>
+        <CommandText>SELECT        '1' AS startchar, '2' AS endchar</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="startchar">
+          <DataField>startchar</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="endchar">
+          <DataField>endchar</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
   </DataSets>
   <ReportParameters>
+    <ReportParameter Name="CharNo">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=1000</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>Number of Characters</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="StartCharNo">
+      <DataType>Integer</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=1</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>Starting Character No</Prompt>
+    </ReportParameter>
     <ReportParameter Name="TaskTypeId">
       <DataType>String</DataType>
       <Prompt>Task Type</Prompt>
@@ -1042,30 +1079,17 @@ ORDER BY task_type_id, service_task_log_id</CommandText>
         </DataSetReference>
       </ValidValues>
     </ReportParameter>
-    <ReportParameter Name="CharNo">
-      <DataType>Integer</DataType>
-      <DefaultValue>
-        <Values>
-          <Value>100</Value>
-        </Values>
-      </DefaultValue>
-      <Prompt>Number of Characters</Prompt>
-    </ReportParameter>
-    <ReportParameter Name="StartCharNo">
-      <DataType>Integer</DataType>
-      <DefaultValue>
-        <Values>
-          <Value>1</Value>
-        </Values>
-      </DefaultValue>
-      <Prompt>Starting Character No</Prompt>
-    </ReportParameter>
-    <ReportParameter Name="dateFrom">
+    <ReportParameter Name="from_date">
       <DataType>DateTime</DataType>
       <Prompt>Task Started Date From</Prompt>
     </ReportParameter>
-    <ReportParameter Name="dateTo">
+    <ReportParameter Name="to_date">
       <DataType>DateTime</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>=DateAdd(DateInterval.Day,1,Today())</Value>
+        </Values>
+      </DefaultValue>
       <Prompt>Task Started Date To</Prompt>
     </ReportParameter>
   </ReportParameters>
